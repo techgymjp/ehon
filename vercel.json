@@ -1,0 +1,12 @@
+{
+  "buildCommand": null,
+  "outputDirectory": "public",
+  "functions": {
+    "api/generate-story.js": {
+      "maxDuration": 60
+    },
+    "api/generate-image.js": {
+      "maxDuration": 30
+    }
+  }
+}
