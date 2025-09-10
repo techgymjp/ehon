@@ -1,0 +1,22 @@
+{
+  "name": "picture-book-generator",
+  "version": "1.0.0",
+  "description": "写真から絵本を自動生成するWEBアプリ",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required'",
+    "start": "vercel dev"
+  },
+  "keywords": [
+    "picture-book",
+    "ai",
+    "openai",
+    "story-generation",
+    "children"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
