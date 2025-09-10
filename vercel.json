@@ -1,0 +1,19 @@
+{
+  "functions": {
+    "api/analyze-image.js": {
+      "maxDuration": 30
+    },
+    "api/generate-story.js": {
+      "maxDuration": 30
+    },
+    "api/generate-image.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/index.html"
+    }
+  ]
+}
