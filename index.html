@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赤ちゃん絵本生成アプリ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', Meiryo, メイリオ, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #ff9a9e, #fecfef);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .upload-section {
+            background: #f8f9ff;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px dashed #ddd;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-section:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        
+        .file-input {
+            opacity: 0;
+            width: 0.1px;
+            height: 0.1px;
+            position: absolute;
+        }
+        
+        .file-input-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .file-input-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+        
+        .preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 15px;
+            margin: 20px auto;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .comment-section {
+            margin-bottom: 30px;
+        }
+        
+        .comment-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .comment-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            min-height: 120px;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .comment-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .generate-button {
+            background: linear-gradient(45deg, #ff9a9e, #fecfef);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: block;
+            margin: 30px auto;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 154, 158, 0.4);
+        }
+        
+        .generate-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 154, 158, 0.6);
+        }
+        
+        .generate-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .storybook {
+            display: none;
+            margin-top: 40px;
+        }
+        
+        .storybook-title {
+            text-align: center;
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(45deg, #ff9a9e, #fecfef);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .story-page {
+            background: white;
+            border: 3px solid #ff9a9e;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .story-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(45deg, #ff9a9e, #fecfef, #667eea, #764ba2);
+        }
+        
+        .page-number {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: #ff9a9e;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .story-image {
+            width: 100%;
+            max-width: 500px;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 15px;
+            margin: 20px auto;
+            display: block;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .story-text {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            color: #333;
+            text-align: center;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .nav-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .prev-button {
+            background: #667eea;
+            color: white;
+        }
+        
+        .next-button {
+            background: #ff9a9e;
+            color: white;
+        }
+        
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .error-message {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #fab1a0;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .story-image {
+                height: 200px;
+            }
+            
+            .story-text {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👶 赤ちゃん絵本生成アプリ 📚</h1>
+            <p>赤ちゃんの写真から、その子が主人公の素敵な絵本を作ります</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="upload-section">
+                <div class="file-input-wrapper">
+                    <input type="file" id="photo-input" class="file-input" accept="image/*">
+                    <label for="photo-input" class="file-input-button">
+                        📷 赤ちゃんの写真を選択
+                    </label>
+                </div>
+                <p>JPG、PNG形式の写真をアップロードしてください</p>
+                <img id="preview-image" class="preview-image" alt="プレビュー">
+            </div>
+            
+            <div class="comment-section">
+                <label for="comment-input">どんな絵本を作りたいですか？</label>
+                <textarea 
+                    id="comment-input" 
+                    class="comment-input" 
+                    placeholder="例：冒険の絵本を作ってください。森で動物たちと友達になるお話がいいです。優しくて心温まるストーリーでお願いします。"
+                ></textarea>
+            </div>
+            
+            <button id="generate-button" class="generate-button">
+                ✨ 絵本を生成する
+            </button>
+            
+            <div class="error-message" id="error-message"></div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>素敵な絵本を作っています...<br>少々お待ちください 🎨</p>
+            </div>
+            
+            <div class="storybook" id="storybook">
+                <h2 class="storybook-title" id="storybook-title"></h2>
+                <div id="story-pages"></div>
+                <div class="navigation">
+                    <button class="nav-button prev-button" id="prev-button">← 前のページ</button>
+                    <button class="nav-button next-button" id="next-button">次のページ →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // アプリケーションの状態管理
+        const state = {
+            uploadedImage: null,
+            currentPage: 0,
+            storyPages: []
+        };
+
+        // DOMの要素を取得
+        const photoInput = document.getElementById('photo-input');
+        const previewImage = document.getElementById('preview-image');
+        const commentInput = document.getElementById('comment-input');
+        const generateButton = document.getElementById('generate-button');
+        const loading = document.getElementById('loading');
+        const storybook = document.getElementById('storybook');
+        const storybookTitle = document.getElementById('storybook-title');
+        const storyPages = document.getElementById('story-pages');
+        const prevButton = document.getElementById('prev-button');
+        const nextButton = document.getElementById('next-button');
+        const errorMessage = document.getElementById('error-message');
+
+        // 写真アップロード処理
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    state.uploadedImage = e.target.result;
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // エラー表示関数
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        // ローディング表示制御
+        function showLoading() {
+            loading.style.display = 'block';
+            generateButton.disabled = true;
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+            generateButton.disabled = false;
+        }
+
+        // APIエンドポイントでストーリー生成
+        async function generateStory(imageBase64, userComment) {
+            const response = await fetch('/api/generate-story', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    imageBase64,
+                    userComment
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'ストーリー生成に失敗しました');
+            }
+
+            return await response.json();
+        }
+
+        // APIエンドポイントで画像生成
+        async function generateImage(prompt) {
+            const response = await fetch('/api/generate-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '画像生成に失敗しました');
+            }
+
+            const data = await response.json();
+            return data.imageUrl;
+        }
+
+        // 絵本のページを表示
+        function displayPages() {
+            storyPages.innerHTML = '';
+            
+            if (state.storyPages.length === 0) return;
+
+            const currentPageData = state.storyPages[state.currentPage];
+            
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'story-page';
+            pageDiv.innerHTML = `
+                <div class="page-number">ページ ${state.currentPage + 1} / ${state.storyPages.length}</div>
+                <img src="${currentPageData.image}" alt="ストーリー画像" class="story-image">
+                <div class="story-text">${currentPageData.text}</div>
+            `;
+            
+            storyPages.appendChild(pageDiv);
+            
+            // ナビゲーションボタンの状態更新
+            prevButton.disabled = state.currentPage === 0;
+            nextButton.disabled = state.currentPage === state.storyPages.length - 1;
+        }
+
+        // ページナビゲーション
+        prevButton.addEventListener('click', () => {
+            if (state.currentPage > 0) {
+                state.currentPage--;
+                displayPages();
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (state.currentPage < state.storyPages.length - 1) {
+                state.currentPage++;
+                displayPages();
+            }
+        });
+
+        // メイン生成処理
+        generateButton.addEventListener('click', async () => {
+            hideError();
+            
+            // バリデーション
+            if (!state.uploadedImage) {
+                showError('赤ちゃんの写真をアップロードしてください。');
+                return;
+            }
+            
+            if (!commentInput.value.trim()) {
+                showError('どんな絵本を作りたいか教えてください。');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                // ストーリー生成
+                const storyData = await generateStory(state.uploadedImage, commentInput.value);
+                
+                // タイトル設定
+                storybookTitle.textContent = storyData.title;
+                
+                // 各ページの画像を生成
+                state.storyPages = [];
+                for (let i = 0; i < storyData.pages.length; i++) {
+                    const pageData = storyData.pages[i];
+                    const imageUrl = await generateImage(pageData.imagePrompt);
+                    
+                    state.storyPages.push({
+                        text: pageData.text,
+                        image: imageUrl
+                    });
+                }
+                
+                // 絵本表示
+                state.currentPage = 0;
+                storybook.style.display = 'block';
+                displayPages();
+                
+                // スムーズスクロール
+                storybook.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                console.error('エラー:', error);
+                showError('絵本の生成中にエラーが発生しました: ' + error.message);
+            }
+            
+            hideLoading();
+        });
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('赤ちゃん絵本生成アプリが起動しました');
+        });
+    </script>
+</body>
+</html>
