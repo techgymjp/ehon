@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>赤ちゃん絵本メーカー</title>
+    <title>写真から絵本を作ろう</title>
     <style>
         * {
             margin: 0;
@@ -12,22 +12,26 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ Pro', 'Yu Gothic Medium', '游ゴシック Medium', YuGothic, '游ゴシック体', 'Meiryo UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: #333;
+            padding: 20px;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 40px;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
             color: white;
+            text-align: center;
+            padding: 30px 20px;
         }
 
         .header h1 {
@@ -41,120 +45,127 @@
             opacity: 0.9;
         }
 
-        .upload-section {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        .main-content {
+            padding: 40px;
         }
 
-        .upload-area {
-            border: 3px dashed #ddd;
+        .upload-section {
+            background: #f8f9fa;
             border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px dashed #ddd;
             transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #4ECDC4;
+            background: #f0fffe;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
             margin-bottom: 20px;
         }
 
-        .upload-area:hover {
-            border-color: #667eea;
-            background-color: #f8f9ff;
+        .file-input {
+            display: none;
         }
 
-        .upload-area.dragover {
-            border-color: #667eea;
-            background-color: #f0f2ff;
+        .file-input-button {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
         }
 
-        .upload-icon {
-            font-size: 3rem;
-            color: #ddd;
-            margin-bottom: 15px;
-        }
-
-        .preview-container {
-            text-align: center;
-            margin: 20px 0;
+        .file-input-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
         }
 
         .preview-image {
-            max-width: 300px;
-            max-height: 300px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        .input-group {
-            margin-bottom: 20px;
+        .comment-section {
+            margin-top: 20px;
         }
 
-        .input-group label {
+        .comment-section label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
         }
 
-        .input-group textarea {
+        .comment-input {
             width: 100%;
+            min-height: 120px;
             padding: 15px;
-            border: 2px solid #e1e5e9;
+            border: 2px solid #ddd;
             border-radius: 10px;
             font-size: 1rem;
             resize: vertical;
-            min-height: 120px;
             transition: border-color 0.3s ease;
         }
 
-        .input-group textarea:focus {
+        .comment-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #4ECDC4;
         }
 
-        .generate-btn {
-            width: 100%;
-            padding: 15px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .generate-button {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
             color: white;
+            padding: 15px 40px;
             border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
+            border-radius: 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
             cursor: pointer;
+            margin-top: 20px;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
         }
 
-        .generate-btn:hover:not(:disabled) {
+        .generate-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
         }
 
-        .generate-btn:disabled {
-            opacity: 0.6;
+        .generate-button:disabled {
+            background: #ccc;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         .loading {
             display: none;
             text-align: center;
-            margin: 20px 0;
-        }
-
-        .loading.show {
-            display: block;
+            margin: 30px 0;
         }
 
         .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4ECDC4;
+            border-radius: 50%;
             width: 50px;
             height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #667eea;
-            border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
+            margin: 0 auto 20px;
         }
 
         @keyframes spin {
@@ -162,111 +173,97 @@
             100% { transform: rotate(360deg); }
         }
 
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background-color: #f0f0f0;
-            border-radius: 3px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
         .storybook {
             display: none;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 40px;
         }
 
-        .storybook.show {
-            display: block;
-        }
-
-        .storybook-title {
-            text-align: center;
-            font-size: 2rem;
-            color: #667eea;
-            margin-bottom: 30px;
-            font-weight: 700;
-        }
-
-        .page {
-            margin-bottom: 40px;
-            padding: 25px;
+        .story-page {
+            background: #fff;
             border-radius: 15px;
-            background: #f8f9ff;
-            border-left: 5px solid #667eea;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-left: 5px solid #FF6B6B;
         }
 
         .page-number {
+            color: #666;
             font-size: 0.9rem;
-            color: #888;
-            margin-bottom: 15px;
-            font-weight: 600;
+            margin-bottom: 10px;
         }
 
-        .page-image {
+        .story-image {
             width: 100%;
             max-width: 400px;
             height: 300px;
             object-fit: cover;
             border-radius: 10px;
             margin-bottom: 20px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        .page-text {
+        .story-text {
             font-size: 1.1rem;
-            line-height: 1.6;
-            color: #444;
-            text-align: center;
+            line-height: 1.8;
+            color: #333;
         }
 
         .error {
-            background: #fee;
-            border: 1px solid #fcc;
-            color: #c66;
+            background: #ffebee;
+            color: #c62828;
             padding: 15px;
             border-radius: 10px;
             margin: 20px 0;
-            text-align: center;
+            border-left: 4px solid #c62828;
         }
 
-        .info-section {
-            background: #e8f4fd;
-            border: 1px solid #bee5eb;
-            color: #0c5460;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .nav-button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .page-indicator {
+            font-size: 1rem;
+            color: #666;
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
             .header h1 {
                 font-size: 2rem;
             }
             
-            .upload-section {
+            .main-content {
                 padding: 20px;
             }
             
-            .upload-area {
-                padding: 25px;
+            .upload-section {
+                padding: 20px;
             }
         }
     </style>
@@ -274,282 +271,319 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🍼 赤ちゃん絵本メーカー ✨</h1>
-            <p>お子様の写真から素敵な絵本を作りましょう</p>
+            <h1>📚 写真から絵本を作ろう</h1>
+            <p>あなたの写真が素敵な絵本の主人公に変身します</p>
         </div>
 
-        <div class="upload-section">
-            <div class="info-section">
-                <strong>✨ このアプリについて：</strong> 
-                お子様の写真をアップロードして、どんな絵本を作りたいかコメントを入力するだけで、AIが自動で素敵な絵本を作成します。
+        <div class="main-content">
+            <div class="upload-section">
+                <h2>1. 写真をアップロードしてください</h2>
+                <div class="file-input-wrapper">
+                    <input type="file" id="photoInput" class="file-input" accept="image/*">
+                    <button class="file-input-button" onclick="document.getElementById('photoInput').click()">
+                        📸 写真を選択
+                    </button>
+                </div>
+                <div id="imagePreview"></div>
+
+                <div class="comment-section">
+                    <label for="storyComment">2. どんな絵本を作りたいですか？</label>
+                    <textarea 
+                        id="storyComment" 
+                        class="comment-input" 
+                        placeholder="例：森の中で動物たちと友達になる冒険の話を作ってください。主人公は勇敢で優しい性格です。"
+                    ></textarea>
+                </div>
+
+                <button id="generateButton" class="generate-button" onclick="generateStorybook()">
+                    ✨ 絵本を作る
+                </button>
             </div>
 
-            <div class="upload-area" id="uploadArea">
-                <div class="upload-icon">📸</div>
-                <h3>赤ちゃんの写真をアップロード</h3>
-                <p>クリックまたはドラッグ＆ドロップしてください</p>
-                <input type="file" id="imageInput" accept="image/*" style="display: none;">
-            </div>
-
-            <div class="preview-container" id="previewContainer" style="display: none;">
-                <img id="previewImage" class="preview-image" alt="プレビュー">
-            </div>
-
-            <div class="input-group">
-                <label for="storyRequest">どんな絵本を作りたいですか？</label>
-                <textarea id="storyRequest" placeholder="例：冒険好きな赤ちゃんが森で動物たちと友達になる優しいお話を作ってください。教育的で心温まる内容にしてほしいです。"></textarea>
-            </div>
-
-            <button class="generate-btn" id="generateBtn" disabled>絵本を生成する ✨</button>
-
-            <div class="loading" id="loading">
+            <div id="loading" class="loading">
                 <div class="spinner"></div>
-                <p id="loadingText">AIが素敵な絵本を作成中です...</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
+                <p>素敵な絵本を作成中です...少しお待ちください</p>
+            </div>
+
+            <div id="error" class="error" style="display: none;"></div>
+
+            <div id="storybook" class="storybook">
+                <h2>📖 あなたの絵本</h2>
+                <div id="storyContent"></div>
+                <div class="navigation">
+                    <button id="prevButton" class="nav-button" onclick="previousPage()">← 前のページ</button>
+                    <span id="pageIndicator" class="page-indicator"></span>
+                    <button id="nextButton" class="nav-button" onclick="nextPage()">次のページ →</button>
                 </div>
             </div>
-
-            <div class="error" id="error" style="display: none;"></div>
-        </div>
-
-        <div class="storybook" id="storybook">
-            <h2 class="storybook-title" id="storybookTitle"></h2>
-            <div id="pages"></div>
         </div>
     </div>
 
     <script>
         let uploadedImage = null;
+        let storyPages = [];
+        let currentPage = 0;
 
-        // DOM要素の取得
-        const uploadArea = document.getElementById('uploadArea');
-        const imageInput = document.getElementById('imageInput');
-        const previewContainer = document.getElementById('previewContainer');
-        const previewImage = document.getElementById('previewImage');
-        const storyRequest = document.getElementById('storyRequest');
-        const generateBtn = document.getElementById('generateBtn');
-        const loading = document.getElementById('loading');
-        const loadingText = document.getElementById('loadingText');
-        const progressFill = document.getElementById('progressFill');
-        const error = document.getElementById('error');
-        const storybook = document.getElementById('storybook');
-        const storybookTitle = document.getElementById('storybookTitle');
-        const pages = document.getElementById('pages');
-
-        // アップロードエリアのイベント
-        uploadArea.addEventListener('click', () => imageInput.click());
-        uploadArea.addEventListener('dragover', handleDragOver);
-        uploadArea.addEventListener('dragleave', handleDragLeave);
-        uploadArea.addEventListener('drop', handleDrop);
-        imageInput.addEventListener('change', handleFileSelect);
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        }
-
-        function handleDragLeave(e) {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
-            }
-        }
-
-        function handleFileSelect(e) {
+        // 写真プレビュー機能
+        document.getElementById('photoInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                handleFile(file);
+                uploadedImage = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imagePreview').innerHTML = 
+                        `<img src="${e.target.result}" class="preview-image" alt="アップロードされた写真">`;
+                };
+                reader.readAsDataURL(file);
             }
+        });
+
+        // 画像をBase64に変換する関数
+        function imageToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
         }
 
-        function handleFile(file) {
-            if (!file.type.startsWith('image/')) {
-                showError('画像ファイルを選択してください。');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                uploadedImage = e.target.result;
-                previewImage.src = uploadedImage;
-                previewContainer.style.display = 'block';
-                updateGenerateButton();
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function updateGenerateButton() {
-            const hasImage = uploadedImage !== null;
-            const hasRequest = storyRequest.value.trim().length > 0;
-            
-            generateBtn.disabled = !(hasImage && hasRequest);
-        }
-
-        storyRequest.addEventListener('input', updateGenerateButton);
-
-        // 絵本生成
-        generateBtn.addEventListener('click', generateStorybook);
-
-        function updateProgress(percentage, text) {
-            progressFill.style.width = `${percentage}%`;
-            loadingText.textContent = text;
-        }
-
+        // 絵本生成メイン関数
         async function generateStorybook() {
             if (!uploadedImage) {
-                showError('画像をアップロードしてください。');
+                showError('写真をアップロードしてください。');
                 return;
             }
 
+            const comment = document.getElementById('storyComment').value.trim();
+            if (!comment) {
+                showError('どんな絵本を作りたいか教えてください。');
+                return;
+            }
+
+            // UI更新
+            document.getElementById('generateButton').disabled = true;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('storybook').style.display = 'none';
+
             try {
-                loading.classList.add('show');
-                error.style.display = 'none';
-                storybook.classList.remove('show');
-                generateBtn.disabled = true;
-
-                updateProgress(10, '画像を分析中...');
-
-                // Step 1: 画像を分析してキャラクター設定を作成
-                const characterDescription = await analyzeImage(uploadedImage);
-                console.log('キャラクター設定:', characterDescription);
-
-                updateProgress(30, 'ストーリーを作成中...');
-
-                // Step 2: ストーリーを生成
-                const story = await generateStory(characterDescription, storyRequest.value);
-                console.log('生成されたストーリー:', story);
-
-                updateProgress(50, '絵本の画像を生成中...');
-
-                // Step 3: 各ページの画像を生成
-                await generateStoryImages(story, characterDescription);
-
-                updateProgress(100, '完成しました！');
-
-            } catch (err) {
-                console.error('エラー:', err);
-                showError('絵本の生成中にエラーが発生しました。もう一度お試しください。');
-            } finally {
-                loading.classList.remove('show');
-                generateBtn.disabled = false;
-            }
-        }
-
-        async function analyzeImage(imageData) {
-            const response = await fetch('/api/analyze-image', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    imageData: imageData
-                })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.text();
-                throw new Error(`画像分析エラー: ${response.status} - ${errorData}`);
-            }
-
-            const data = await response.json();
-            return data.description;
-        }
-
-        async function generateStory(characterDescription, userRequest) {
-            const response = await fetch('/api/generate-story', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    characterDescription: characterDescription,
-                    userRequest: userRequest
-                })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.text();
-                throw new Error(`ストーリー生成エラー: ${response.status} - ${errorData}`);
-            }
-
-            const data = await response.json();
-            return data.story;
-        }
-
-        async function generateStoryImages(story, characterDescription) {
-            storybookTitle.textContent = story.title;
-            pages.innerHTML = '';
-
-            const totalPages = story.pages.length;
-            for (let i = 0; i < totalPages; i++) {
-                const page = story.pages[i];
+                // 1. 人物写真を分析してキャラクター説明を生成
+                const characterDescription = await analyzePhoto(uploadedImage);
                 
+                // 2. ストーリーを生成
+                const story = await generateStory(characterDescription, comment);
+                
+                // 3. 各ページの画像を生成
+                storyPages = await generateStoryImages(story, characterDescription);
+                
+                // 4. 絵本を表示
+                displayStorybook();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError('絵本の生成中にエラーが発生しました: ' + error.message);
+            } finally {
+                document.getElementById('generateButton').disabled = false;
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // 写真分析関数
+        async function analyzePhoto(imageFile) {
+            const base64Image = await imageToBase64(imageFile);
+            
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getApiKey()}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-4-vision-preview",
+                    messages: [
+                        {
+                            role: "user",
+                            content: [
+                                {
+                                    type: "text",
+                                    text: "この写真の人物の特徴を詳しく説明してください。絵本のキャラクターとして再現するための情報として、髪の色、髪型、顔の特徴、服装、雰囲気などを具体的に教えてください。日本語で回答してください。"
+                                },
+                                {
+                                    type: "image_url",
+                                    image_url: {
+                                        url: `data:image/jpeg;base64,${base64Image}`
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    max_tokens: 500
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`写真の分析に失敗しました: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        // ストーリー生成関数
+        async function generateStory(characterDescription, userComment) {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getApiKey()}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-4",
+                    messages: [
+                        {
+                            role: "system",
+                            content: `あなたは子供向けの絵本作家です。以下の人物の特徴を持つキャラクターを主人公にした絵本を作成してください。
+
+キャラクターの特徴: ${characterDescription}
+
+以下の要望に基づいて、5ページの絵本ストーリーを作成してください。各ページは以下の形式で出力してください：
+
+【ページ1】
+画像の説明: (このページの場面を詳細に描写)
+テキスト: (読み聞かせに適した短い文章)
+
+このように5ページ分作成してください。子供が楽しめる内容で、教育的な要素も含めてください。`
+                        },
+                        {
+                            role: "user",
+                            content: userComment
+                        }
+                    ],
+                    max_tokens: 1500
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`ストーリーの生成に失敗しました: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        // 画像生成関数
+        async function generateStoryImages(story, characterDescription) {
+            const pages = parseStory(story);
+            const generatedPages = [];
+
+            for (let i = 0; i < pages.length; i++) {
                 try {
-                    updateProgress(50 + (i / totalPages) * 40, `ページ ${i + 1}/${totalPages} の画像を生成中...`);
+                    const imagePrompt = `Children's book illustration style, cute and colorful, ${characterDescription}, ${pages[i].imageDescription}`;
                     
-                    // 画像を生成
-                    const imageUrl = await generateImage(page.imagePrompt);
-                    
-                    // ページを表示
-                    displayPage(page, imageUrl);
-                    
-                    // 少し待機（API制限対策）
-                    if (i < totalPages - 1) {
-                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    const response = await fetch('https://api.openai.com/v1/images/generations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${getApiKey()}`
+                        },
+                        body: JSON.stringify({
+                            model: "dall-e-3",
+                            prompt: imagePrompt,
+                            n: 1,
+                            size: "1024x1024"
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`画像生成に失敗しました: ${response.status}`);
                     }
-                } catch (err) {
-                    console.error(`ページ ${i + 1} の画像生成エラー:`, err);
-                    displayPage(page, null);
+
+                    const imageData = await response.json();
+                    
+                    generatedPages.push({
+                        imageUrl: imageData.data[0].url,
+                        text: pages[i].text
+                    });
+                } catch (error) {
+                    console.error(`Page ${i + 1} image generation failed:`, error);
+                    generatedPages.push({
+                        imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y0ZjRmNCIvPjx0ZXh0IHg9IjIwMCIgeT0iMTUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OSI+5Yy56LGh55Sf5oiQ44GM44Gn44GN44G+44Gb44KT44Gn44GX44GfPC90ZXh0Pjwvc3ZnPg==',
+                        text: pages[i].text
+                    });
                 }
             }
 
-            storybook.classList.add('show');
+            return generatedPages;
         }
 
-        async function generateImage(prompt) {
-            const response = await fetch('/api/generate-image', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    prompt: prompt
-                })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.text();
-                throw new Error(`画像生成エラー: ${response.status} - ${errorData}`);
+        // ストーリー解析関数
+        function parseStory(story) {
+            const pages = [];
+            const pageRegex = /【ページ(\d+)】\s*画像の説明:\s*(.*?)\s*テキスト:\s*(.*?)(?=【ページ|$)/gs;
+            
+            let match;
+            while ((match = pageRegex.exec(story)) !== null) {
+                pages.push({
+                    imageDescription: match[2].trim(),
+                    text: match[3].trim()
+                });
             }
 
-            const data = await response.json();
-            return data.imageUrl;
+            return pages;
         }
 
-        function displayPage(page, imageUrl) {
-            const pageDiv = document.createElement('div');
-            pageDiv.className = 'page';
-            
-            pageDiv.innerHTML = `
-                <div class="page-number">ページ ${page.pageNumber}</div>
-                ${imageUrl ? `<img src="${imageUrl}" alt="ページ${page.pageNumber}の画像" class="page-image">` : '<div class="page-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #666;">画像を生成できませんでした</div>'}
-                <div class="page-text">${page.text}</div>
+        // 絵本表示関数
+        function displayStorybook() {
+            if (storyPages.length === 0) return;
+
+            document.getElementById('storybook').style.display = 'block';
+            currentPage = 0;
+            updatePageDisplay();
+        }
+
+        // ページ表示更新
+        function updatePageDisplay() {
+            const page = storyPages[currentPage];
+            document.getElementById('storyContent').innerHTML = `
+                <div class="story-page">
+                    <div class="page-number">ページ ${currentPage + 1}</div>
+                    <img src="${page.imageUrl}" alt="絵本のイラスト" class="story-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y0ZjRmNCIvPjx0ZXh0IHg9IjIwMCIgeT0iMTUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OSI+5Yy56LGh6Kqt44G/6L6844G/44Gn44GN44G+44Gb44KT44Gn44GX44GfPC90ZXh0Pjwvc3ZnPg=='">
+                    <div class="story-text">${page.text}</div>
+                </div>
             `;
-            
-            pages.appendChild(pageDiv);
+
+            document.getElementById('pageIndicator').textContent = `${currentPage + 1} / ${storyPages.length}`;
+            document.getElementById('prevButton').disabled = currentPage === 0;
+            document.getElementById('nextButton').disabled = currentPage === storyPages.length - 1;
         }
 
+        // ページ遷移関数
+        function previousPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                updatePageDisplay();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < storyPages.length - 1) {
+                currentPage++;
+                updatePageDisplay();
+            }
+        }
+
+        // エラー表示関数
         function showError(message) {
-            error.textContent = message;
-            error.style.display = 'block';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = message;
+        }
+
+        // APIキー取得関数（環境変数から）
+        function getApiKey() {
+            // Vercelでデプロイする際は、環境変数 OPENAI_API_KEY を設定してください
+            // 本番環境では、バックエンドAPIを経由してAPIキーを使用することを推奨します
+            return process.env.OPENAI_API_KEY || 'あなたのAPIキーをここに設定';
         }
     </script>
 </body>
