@@ -483,6 +483,10 @@
                     model: "gpt-4o-mini",
                     messages: [
                         {
+                            role: "system",
+                            content: "あなたは子供向け絵本の作家です。必ず指定されたJSON形式でレスポンスを返してください。JSON形式以外の文章は一切含めないでください。"
+                        },
+                        {
                             role: "user",
                             content: `以下のキャラクター設定の赤ちゃんが主人公の絵本を作成してください。
 
@@ -490,13 +494,38 @@
 
 ユーザーリクエスト: ${userRequest}
 
-以下のJSON形式で、6ページの絵本を作成してください：
+必ず以下のJSON形式のみで6ページの絵本を作成してください。他の文章は一切含めないでください：
 
 {
   "title": "絵本のタイトル",
   "pages": [
     {
       "pageNumber": 1,
+      "text": "このページの文章",
+      "imagePrompt": "このページの画像生成用の英語プロンプト（キャラクターの特徴を含む）"
+    },
+    {
+      "pageNumber": 2,
+      "text": "このページの文章",
+      "imagePrompt": "このページの画像生成用の英語プロンプト（キャラクターの特徴を含む）"
+    },
+    {
+      "pageNumber": 3,
+      "text": "このページの文章", 
+      "imagePrompt": "このページの画像生成用の英語プロンプト（キャラクターの特徴を含む）"
+    },
+    {
+      "pageNumber": 4,
+      "text": "このページの文章",
+      "imagePrompt": "このページの画像生成用の英語プロンプト（キャラクターの特徴を含む）"
+    },
+    {
+      "pageNumber": 5,
+      "text": "このページの文章",
+      "imagePrompt": "このページの画像生成用の英語プロンプト（キャラクターの特徴を含む）"
+    },
+    {
+      "pageNumber": 6,
       "text": "このページの文章",
       "imagePrompt": "このページの画像生成用の英語プロンプト（キャラクターの特徴を含む）"
     }
@@ -510,23 +539,85 @@
 - 一貫したストーリーライン`
                         }
                     ],
-                    max_tokens: 2000
+                    max_tokens: 2500,
+                    temperature: 0.7
                 })
             });
 
             if (!response.ok) {
-                throw new Error(`ストーリー生成エラー: ${response.status}`);
+                const errorData = await response.text();
+                console.error('APIエラー詳細:', errorData);
+                throw new Error(`ストーリー生成エラー: ${response.status} - ${errorData}`);
             }
 
             const data = await response.json();
-            const storyText = data.choices[0].message.content;
+            const storyText = data.choices[0].message.content.trim();
+            
+            console.log('APIからのレスポンス:', storyText);
+            
+            // JSONの前後にあるかもしれない余分な文字を削除
+            let cleanedStoryText = storyText;
+            const jsonStart = cleanedStoryText.indexOf('{');
+            const jsonEnd = cleanedStoryText.lastIndexOf('}');
+            
+            if (jsonStart !== -1 && jsonEnd !== -1) {
+                cleanedStoryText = cleanedStoryText.substring(jsonStart, jsonEnd + 1);
+            }
             
             try {
-                return JSON.parse(storyText);
+                const parsedStory = JSON.parse(cleanedStoryText);
+                
+                // データ構造の検証
+                if (!parsedStory.title || !parsedStory.pages || !Array.isArray(parsedStory.pages)) {
+                    throw new Error('不正なストーリー構造');
+                }
+                
+                return parsedStory;
             } catch (e) {
                 console.error('JSON解析エラー:', e);
-                throw new Error('ストーリーの形式が正しくありません');
+                console.error('解析しようとしたテキスト:', cleanedStoryText);
+                
+                // フォールバック: 手動でストーリーを作成
+                return createFallbackStory(characterDescription, userRequest);
             }
+        }
+        
+        function createFallbackStory(characterDescription, userRequest) {
+            return {
+                title: "赤ちゃんの大冒険",
+                pages: [
+                    {
+                        pageNumber: 1,
+                        text: "可愛い赤ちゃんが今日も元気いっぱいです。",
+                        imagePrompt: `A cute baby character based on: ${characterDescription}. Happy and energetic, children's book illustration style.`
+                    },
+                    {
+                        pageNumber: 2,
+                        text: "赤ちゃんはお外に出て、素敵な冒険を始めました。",
+                        imagePrompt: `A cute baby character based on: ${characterDescription}. Walking outside, starting an adventure, children's book illustration style.`
+                    },
+                    {
+                        pageNumber: 3,
+                        text: "途中で優しい動物たちに出会いました。",
+                        imagePrompt: `A cute baby character based on: ${characterDescription}. Meeting friendly animals, warm and gentle scene, children's book illustration style.`
+                    },
+                    {
+                        pageNumber: 4,
+                        text: "みんなで一緒に楽しく遊びました。",
+                        imagePrompt: `A cute baby character based on: ${characterDescription}. Playing with animal friends, joyful scene, children's book illustration style.`
+                    },
+                    {
+                        pageNumber: 5,
+                        text: "たくさん遊んだ後は、みんなでお昼寝の時間です。",
+                        imagePrompt: `A cute baby character based on: ${characterDescription}. Nap time with animal friends, peaceful and cozy scene, children's book illustration style.`
+                    },
+                    {
+                        pageNumber: 6,
+                        text: "今日も楽しい一日でした。また明日も冒険しようね！",
+                        imagePrompt: `A cute baby character based on: ${characterDescription}. Happy ending, waving goodbye, warm sunset, children's book illustration style.`
+                    }
+                ]
+            };
         }
 
         async function generateStoryImages(story, characterDescription) {
