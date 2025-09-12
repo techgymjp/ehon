@@ -690,15 +690,17 @@
                         },
                         body: JSON.stringify({
                             model: "dall-e-3",
-                            prompt: `Children's book illustration: ${page.imagePrompt}. The main character should match this description: ${characterDescription}. Style: colorful, friendly, child-friendly illustration`,
+                            prompt: `Children's book illustration: ${page.imagePrompt}. The main character should match this description: ${characterDescription}. Style: colorful, friendly, child-friendly illustration, storybook art`,
                             size: "1024x1024",
                             quality: "standard",
+                            style: "vivid",
                             n: 1
                         })
                     });
 
                     if (!imageResponse.ok) {
                         const errorData = await imageResponse.json().catch(() => ({}));
+                        console.error(`Image generation error for page ${i + 1}:`, errorData);
                         throw new Error(`画像生成に失敗しました (ページ ${i + 1}): ${imageResponse.status} - ${errorData.error?.message || 'Unknown error'}`);
                     }
 
