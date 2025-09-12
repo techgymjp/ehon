@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>写真から絵本自動生成</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .debug-mode {
+            background: #f8f9fa;
+            border: 2px dashed #6c757d;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .debug-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .debug-toggle input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .upload-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .upload-box {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-box:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-box.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-box input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #ccc;
+            margin-bottom: 15px;
+        }
+
+        .comment-section {
+            margin-bottom: 30px;
+        }
+
+        .comment-section textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .comment-section textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .preview-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .preview-box {
+            border: 2px solid #eee;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+
+        .preview-box img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .book-viewer {
+            display: none;
+            margin-top: 40px;
+            border: 2px solid #eee;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .book-header {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .book-content {
+            background: white;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .book-page {
+            display: none;
+            padding: 40px;
+            min-height: 400px;
+        }
+
+        .book-page.active {
+            display: block;
+        }
+
+        .book-page img {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .book-page h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .book-page p {
+            color: #666;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .book-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-indicator {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #d00;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .upload-section,
+            .preview-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📸✨ 写真から絵本自動生成 ✨📚</h1>
+            <p>あなたの写真が素敵な絵本の主人公に変身！</p>
+        </div>
+
+        <div class="main-content">
+            <!-- デバッグモード -->
+            <div class="debug-mode">
+                <div class="debug-toggle">
+                    <input type="checkbox" id="debugMode">
+                    <label for="debugMode"><strong>デバッグモード</strong> - APIキーを直接入力してテスト</label>
+                </div>
+                <input type="text" id="apiKeyInput" class="api-key-input" placeholder="OpenAI APIキーを入力してください" style="display: none;">
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- アップロードセクション -->
+            <div class="upload-section">
+                <div class="upload-box" id="photoUpload">
+                    <input type="file" id="photoFile" accept="image/*">
+                    <div class="upload-icon">📷</div>
+                    <h3>人物写真をアップロード</h3>
+                    <p>主人公になる人の写真を選んでください</p>
+                </div>
+
+                <div class="upload-box" style="cursor: default;">
+                    <div class="upload-icon">💭</div>
+                    <h3>絵本のリクエスト</h3>
+                    <p>どんな絵本を作りたいか教えてください</p>
+                </div>
+            </div>
+
+            <!-- コメント入力 -->
+            <div class="comment-section">
+                <textarea id="storyRequest" placeholder="例：「宇宙を冒険する絵本を作ってください」「動物たちと友達になる優しいお話をお願いします」「魔法使いになって世界を救う冒険をしたいです」など、どんな絵本を作りたいか自由に書いてください！"></textarea>
+            </div>
+
+            <!-- プレビューセクション -->
+            <div class="preview-section" id="previewSection" style="display: none;">
+                <div class="preview-box">
+                    <h4>アップロード済み写真</h4>
+                    <img id="photoPreview" alt="アップロード画像">
+                </div>
+                <div class="preview-box">
+                    <h4>リクエスト内容</h4>
+                    <p id="requestPreview"></p>
+                </div>
+            </div>
+
+            <!-- 生成ボタン -->
+            <button class="generate-btn" id="generateBtn" disabled>🎨 絵本を生成する</button>
+
+            <!-- ローディング -->
+            <div class="loading" id="loadingSection">
+                <div class="spinner"></div>
+                <p>あなただけの絵本を作成中...</p>
+                <p><small>少々お待ちください（1-2分程度）</small></p>
+            </div>
+
+            <!-- 絵本ビューアー -->
+            <div class="book-viewer" id="bookViewer">
+                <div class="book-header">
+                    <h2 id="bookTitle">あなたの絵本</h2>
+                </div>
+                <div class="book-content" id="bookContent">
+                    <!-- ページがここに動的に追加されます -->
+                </div>
+                <div class="book-navigation">
+                    <button class="nav-btn" id="prevBtn" disabled>← 前のページ</button>
+                    <span class="page-indicator" id="pageIndicator">1 / 1</span>
+                    <button class="nav-btn" id="nextBtn">次のページ →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PictureBookGenerator {
+            constructor() {
+                this.currentPage = 0;
+                this.bookPages = [];
+                this.uploadedPhoto = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                // デバッグモード切り替え
+                document.getElementById('debugMode').addEventListener('change', (e) => {
+                    const apiKeyInput = document.getElementById('apiKeyInput');
+                    apiKeyInput.style.display = e.target.checked ? 'block' : 'none';
+                });
+
+                // ファイルアップロード
+                const photoFile = document.getElementById('photoFile');
+                const photoUpload = document.getElementById('photoUpload');
+
+                photoFile.addEventListener('change', (e) => this.handlePhotoUpload(e));
+                
+                // ドラッグ&ドロップ
+                photoUpload.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    photoUpload.classList.add('dragover');
+                });
+
+                photoUpload.addEventListener('dragleave', () => {
+                    photoUpload.classList.remove('dragover');
+                });
+
+                photoUpload.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    photoUpload.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.processPhoto(files[0]);
+                    }
+                });
+
+                // テキストエリアの変更
+                document.getElementById('storyRequest').addEventListener('input', () => {
+                    this.updatePreview();
+                    this.checkGenerateButton();
+                });
+
+                // 生成ボタン
+                document.getElementById('generateBtn').addEventListener('click', () => {
+                    this.generatePictureBook();
+                });
+
+                // ナビゲーションボタン
+                document.getElementById('prevBtn').addEventListener('click', () => {
+                    this.previousPage();
+                });
+
+                document.getElementById('nextBtn').addEventListener('click', () => {
+                    this.nextPage();
+                });
+            }
+
+            handlePhotoUpload(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    this.processPhoto(file);
+                }
+            }
+
+            processPhoto(file) {
+                if (!file.type.startsWith('image/')) {
+                    this.showError('画像ファイルを選択してください。');
+                    return;
+                }
+
+                this.uploadedPhoto = file;
+                
+                // プレビュー画像を表示
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.getElementById('photoPreview');
+                    preview.src = e.target.result;
+                    this.updatePreview();
+                    this.checkGenerateButton();
+                };
+                reader.readAsDataURL(file);
+            }
+
+            updatePreview() {
+                const previewSection = document.getElementById('previewSection');
+                const requestPreview = document.getElementById('requestPreview');
+                const storyRequest = document.getElementById('storyRequest').value;
+
+                if (this.uploadedPhoto || storyRequest) {
+                    previewSection.style.display = 'grid';
+                    requestPreview.textContent = storyRequest || '（まだ入力されていません）';
+                }
+            }
+
+            checkGenerateButton() {
+                const generateBtn = document.getElementById('generateBtn');
+                const storyRequest = document.getElementById('storyRequest').value.trim();
+                
+                generateBtn.disabled = !(this.uploadedPhoto && storyRequest);
+            }
+
+            async generatePictureBook() {
+                try {
+                    this.showLoading(true);
+                    this.hideError();
+
+                    const storyRequest = document.getElementById('storyRequest').value;
+                    const apiKey = this.getApiKey();
+
+                    if (!apiKey) {
+                        throw new Error('APIキーが設定されていません。デバッグモードでAPIキーを入力するか、Vercelの環境変数を設定してください。');
+                    }
+
+                    // Step 1: 写真を解析してキャラクター描写を生成
+                    const characterDescription = await this.analyzePhoto(apiKey);
+                    
+                    // Step 2: ストーリーを生成
+                    const story = await this.generateStory(apiKey, characterDescription, storyRequest);
+                    
+                    // Step 3: 各ページの画像を生成
+                    await this.generateBookPages(apiKey, story, characterDescription);
+                    
+                    // 絵本を表示
+                    this.displayBook();
+
+                } catch (error) {
+                    this.showError(`エラーが発生しました: ${error.message}`);
+                    console.error('Error:', error);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            getApiKey() {
+                const debugMode = document.getElementById('debugMode').checked;
+                if (debugMode) {
+                    return document.getElementById('apiKeyInput').value.trim();
+                }
+                // 本番環境では環境変数から取得（Vercelの場合）
+                return 'OPENAI_API_KEY_PLACEHOLDER'; // これは実際の実装では適切に処理する
+            }
+
+            async analyzePhoto(apiKey) {
+                const base64Image = await this.convertImageToBase64(this.uploadedPhoto);
+                
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4-vision-preview",
+                        messages: [
+                            {
+                                role: "user",
+                                content: [
+                                    {
+                                        type: "text",
+                                        text: "この写真の人物の特徴を詳しく説明してください。絵本のキャラクターとして描くために、髪型、顔の特徴、表情、服装などを含めて、親しみやすく魅力的な描写をお願いします。日本語で200文字程度で回答してください。"
+                                    },
+                                    {
+                                        type: "image_url",
+                                        image_url: {
+                                            url: base64Image
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                        max_tokens: 300
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`画像分析に失敗しました: ${response.status}`);
+                }
+
+                const result = await response.json();
+                return result.choices[0].message.content;
+            }
+
+            async generateStory(apiKey, characterDescription, storyRequest) {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "あなたは絵本作家です。子供向けの心温まる絵本を作成してください。ストーリーは5つのページで構成し、各ページにタイトルと本文を含めてください。JSON形式で返答してください。"
+                            },
+                            {
+                                role: "user",
+                                content: `
+                                主人公の特徴: ${characterDescription}
+                                ストーリーのリクエスト: ${storyRequest}
+                                
+                                この主人公を使って、リクエストに基づいた5ページの絵本を作成してください。
+                                各ページは以下の構造でJSON形式で出力してください：
+                                {
+                                    "title": "絵本のタイトル",
+                                    "pages": [
+                                        {
+                                            "pageNumber": 1,
+                                            "title": "ページタイトル",
+                                            "text": "ページの本文（子供向けで分かりやすく）",
+                                            "imagePrompt": "このページの画像生成用のプロンプト（英語で詳細に）"
+                                        }
+                                    ]
+                                }
+                                `
+                            }
+                        ],
+                        max_tokens: 2000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`ストーリー生成に失敗しました: ${response.status}`);
+                }
+
+                const result = await response.json();
+                return JSON.parse(result.choices[0].message.content);
+            }
+
+            async generateBookPages(apiKey, story, characterDescription) {
+                this.bookPages = [];
+                
+                for (let i = 0; i < story.pages.length; i++) {
+                    const page = story.pages[i];
+                    
+                    // 画像を生成
+                    const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: "dall-e-3",
+                            prompt: `Children's book illustration: ${page.imagePrompt}. The main character should match this description: ${characterDescription}. Style: colorful, friendly, child-friendly illustration`,
+                            size: "1024x1024",
+                            quality: "standard",
+                            n: 1
+                        })
+                    });
+
+                    if (!imageResponse.ok) {
+                        const errorData = await imageResponse.json().catch(() => ({}));
+                        throw new Error(`画像生成に失敗しました (ページ ${i + 1}): ${imageResponse.status} - ${errorData.error?.message || 'Unknown error'}`);
+                    }
+
+                    const imageResult = await imageResponse.json();
+                    
+                    this.bookPages.push({
+                        ...page,
+                        imageUrl: imageResult.data[0].url
+                    });
+                }
+
+                // 絵本のタイトルを設定
+                document.getElementById('bookTitle').textContent = story.title;
+            }
+
+            displayBook() {
+                const bookViewer = document.getElementById('bookViewer');
+                const bookContent = document.getElementById('bookContent');
+                
+                // 既存のページをクリア
+                bookContent.innerHTML = '';
+                
+                // ページを作成
+                this.bookPages.forEach((page, index) => {
+                    const pageElement = document.createElement('div');
+                    pageElement.className = `book-page ${index === 0 ? 'active' : ''}`;
+                    pageElement.innerHTML = `
+                        <img src="${page.imageUrl}" alt="ページ ${page.pageNumber} の画像">
+                        <h3>${page.title}</h3>
+                        <p>${page.text}</p>
+                    `;
+                    bookContent.appendChild(pageElement);
+                });
+
+                this.currentPage = 0;
+                this.updateNavigation();
+                bookViewer.style.display = 'block';
+                
+                // スムーズスクロール
+                bookViewer.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            previousPage() {
+                if (this.currentPage > 0) {
+                    this.currentPage--;
+                    this.showPage(this.currentPage);
+                    this.updateNavigation();
+                }
+            }
+
+            nextPage() {
+                if (this.currentPage < this.bookPages.length - 1) {
+                    this.currentPage++;
+                    this.showPage(this.currentPage);
+                    this.updateNavigation();
+                }
+            }
+
+            showPage(pageIndex) {
+                const pages = document.querySelectorAll('.book-page');
+                pages.forEach((page, index) => {
+                    page.classList.toggle('active', index === pageIndex);
+                });
+            }
+
+            updateNavigation() {
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                const pageIndicator = document.getElementById('pageIndicator');
+
+                prevBtn.disabled = this.currentPage === 0;
+                nextBtn.disabled = this.currentPage === this.bookPages.length - 1;
+                pageIndicator.textContent = `${this.currentPage + 1} / ${this.bookPages.length}`;
+            }
+
+            async convertImageToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            showLoading(show) {
+                document.getElementById('loadingSection').style.display = show ? 'block' : 'none';
+                document.getElementById('generateBtn').disabled = show;
+            }
+
+            showError(message) {
+                const errorElement = document.getElementById('errorMessage');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+
+            hideError() {
+                document.getElementById('errorMessage').style.display = 'none';
+            }
+
+            async testApiKey() {
+                const apiKey = document.getElementById('apiKeyInput').value.trim();
+                const testResult = document.getElementById('apiTestResult');
+                
+                if (!apiKey) {
+                    testResult.innerHTML = '<span style="color: #d00;">❌ APIキーを入力してください</span>';
+                    testResult.style.display = 'block';
+                    testResult.style.background = '#fee';
+                    return;
+                }
+
+                if (!apiKey.startsWith('sk-')) {
+                    testResult.innerHTML = '<span style="color: #d00;">❌ 無効なAPIキーです。"sk-"で始まる必要があります</span>';
+                    testResult.style.display = 'block';
+                    testResult.style.background = '#fee';
+                    return;
+                }
+
+                try {
+                    testResult.innerHTML = '<span style="color: #666;">🔄 APIキーをテスト中...</span>';
+                    testResult.style.display = 'block';
+                    testResult.style.background = '#f0f8ff';
+
+                    // 簡単なテストリクエスト
+                    const response = await fetch('https://api.openai.com/v1/models', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const models = await response.json();
+                        const hasGpt4o = models.data.some(model => model.id === 'gpt-4o');
+                        const hasDalle = models.data.some(model => model.id.includes('dall-e'));
+                        
+                        let message = '<span style="color: #28a745;">✅ APIキーが有効です！</span><br>';
+                        message += `<small>利用可能なモデル数: ${models.data.length}<br>`;
+                        message += `GPT-4o: ${hasGpt4o ? '✅' : '❌'}<br>`;
+                        message += `DALL-E: ${hasDalle ? '✅' : '❌'}</small>`;
+                        
+                        testResult.innerHTML = message;
+                        testResult.style.background = '#e7f5e7';
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        testResult.innerHTML = `<span style="color: #d00;">❌ APIキーエラー: ${response.status}<br>${errorData.error?.message || '不明なエラー'}</span>`;
+                        testResult.style.background = '#fee';
+                    }
+                } catch (error) {
+                    testResult.innerHTML = `<span style="color: #d00;">❌ テストに失敗しました: ${error.message}</span>`;
+                    testResult.style.background = '#fee';
+                }
+            }
+        }
+
+        // アプリケーションを初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            new PictureBookGenerator();
+        });
+    </script>
+</body>
+</html>
