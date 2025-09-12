@@ -663,7 +663,8 @@
                     });
 
                     if (!imageResponse.ok) {
-                        throw new Error(`画像生成に失敗しました (ページ ${i + 1}): ${imageResponse.status}`);
+                        const errorData = await imageResponse.json().catch(() => ({}));
+                        throw new Error(`画像生成に失敗しました (ページ ${i + 1}): ${imageResponse.status} - ${errorData.error?.message || 'Unknown error'}`);
                     }
 
                     const imageResult = await imageResponse.json();
