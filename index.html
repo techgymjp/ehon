@@ -95,6 +95,13 @@
             transform: translateY(-1px);
         }
 
+        .api-test-result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+
         .upload-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -355,6 +362,8 @@
                     <label for="debugMode"><strong>デバッグモード</strong> - APIキーを直接入力してテスト</label>
                 </div>
                 <input type="text" id="apiKeyInput" class="api-key-input" placeholder="OpenAI APIキーを入力してください" style="display: none;">
+                <button class="test-api-btn" id="testApiBtn" style="display: none;">APIキーをテスト</button>
+                <div class="api-test-result" id="apiTestResult"></div>
             </div>
 
             <div class="error-message" id="errorMessage"></div>
@@ -436,7 +445,15 @@
                 // デバッグモード切り替え
                 document.getElementById('debugMode').addEventListener('change', (e) => {
                     const apiKeyInput = document.getElementById('apiKeyInput');
-                    apiKeyInput.style.display = e.target.checked ? 'block' : 'none';
+                    const testApiBtn = document.getElementById('testApiBtn');
+                    const display = e.target.checked ? 'block' : 'none';
+                    apiKeyInput.style.display = display;
+                    testApiBtn.style.display = display;
+                });
+
+                // APIテストボタン
+                document.getElementById('testApiBtn').addEventListener('click', () => {
+                    this.testApiKey();
                 });
 
                 // ファイルアップロード
@@ -786,14 +803,14 @@
                 const testResult = document.getElementById('apiTestResult');
                 
                 if (!apiKey) {
-                    testResult.innerHTML = '<span style="color: #d00;">❌ APIキーを入力してください</span>';
+                    testResult.innerHTML = '<span style="color: #d00;">⌘ APIキーを入力してください</span>';
                     testResult.style.display = 'block';
                     testResult.style.background = '#fee';
                     return;
                 }
 
                 if (!apiKey.startsWith('sk-')) {
-                    testResult.innerHTML = '<span style="color: #d00;">❌ 無効なAPIキーです。"sk-"で始まる必要があります</span>';
+                    testResult.innerHTML = '<span style="color: #d00;">⌘ 無効なAPIキーです。"sk-"で始まる必要があります</span>';
                     testResult.style.display = 'block';
                     testResult.style.background = '#fee';
                     return;
@@ -819,18 +836,18 @@
                         
                         let message = '<span style="color: #28a745;">✅ APIキーが有効です！</span><br>';
                         message += `<small>利用可能なモデル数: ${models.data.length}<br>`;
-                        message += `GPT-4o: ${hasGpt4o ? '✅' : '❌'}<br>`;
-                        message += `DALL-E: ${hasDalle ? '✅' : '❌'}</small>`;
+                        message += `GPT-4o: ${hasGpt4o ? '✅' : '⌘'}<br>`;
+                        message += `DALL-E: ${hasDalle ? '✅' : '⌘'}</small>`;
                         
                         testResult.innerHTML = message;
                         testResult.style.background = '#e7f5e7';
                     } else {
                         const errorData = await response.json().catch(() => ({}));
-                        testResult.innerHTML = `<span style="color: #d00;">❌ APIキーエラー: ${response.status}<br>${errorData.error?.message || '不明なエラー'}</span>`;
+                        testResult.innerHTML = `<span style="color: #d00;">⌘ APIキーエラー: ${response.status}<br>${errorData.error?.message || '不明なエラー'}</span>`;
                         testResult.style.background = '#fee';
                     }
                 } catch (error) {
-                    testResult.innerHTML = `<span style="color: #d00;">❌ テストに失敗しました: ${error.message}</span>`;
+                    testResult.innerHTML = `<span style="color: #d00;">⌘ テストに失敗しました: ${error.message}</span>`;
                     testResult.style.background = '#fee';
                 }
             }
