@@ -449,7 +449,9 @@
 
             const apiKey = getApiKey();
             if (!apiKey) {
-                showError('APIキーが設定されていません。デバッグモードでAPIキーを入力するか、環境変数を設定してください。');
+                showError('APIキーが設定されていません。デバッグモードでAPIキーを入力してください。');
+                document.getElementById('debugSection').style.display = 'block';
+                document.getElementById('debugContent').style.display = 'block';
                 return;
             }
 
