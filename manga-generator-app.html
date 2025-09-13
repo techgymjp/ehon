@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4コママンガ自動生成アプリ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ Pro', 'Yu Gothic Medium', '游ゴシック Medium', YuGothic, '游ゴシック体', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .debug-mode {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .debug-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 30px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #ff6b6b;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-section h3::before {
+            content: "📸";
+            font-size: 1.5rem;
+        }
+
+        .form-section:nth-child(3) h3::before {
+            content: "💭";
+        }
+
+        .form-section:nth-child(4) h3::before {
+            content: "🔑";
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .file-upload input[type=file] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-upload-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            background: #fafafa;
+            transition: all 0.3s ease;
+            text-align: center;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .file-upload:hover .file-upload-button {
+            border-color: #ff6b6b;
+            background: #fff5f5;
+            color: #ff6b6b;
+        }
+
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 10px;
+            margin-top: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        textarea.input-field {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+            width: 100%;
+            margin-top: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .generate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #ff6b6b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 40px;
+        }
+
+        .manga-panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .manga-panel {
+            background: white;
+            border: 3px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            position: relative;
+        }
+
+        .manga-panel img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .panel-number {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #ff6b6b;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .error {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 2px solid #fab1a0;
+        }
+
+        .success {
+            background: #e6ffe6;
+            color: #00b894;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 2px solid #a8e6cf;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .manga-panels {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 4コママンガ自動生成</h1>
+            <p>人物写真とコメントから、あなただけのオリジナルマンガを作成します</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- デバッグモード -->
+            <div class="debug-mode">
+                <div class="debug-toggle">
+                    <span>🔧 デバッグモード</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="debugMode">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="debugControls" style="display: none;">
+                    <div class="form-section">
+                        <h3>🔑 OpenAI APIキー</h3>
+                        <input type="password" id="apiKey" class="input-field" placeholder="sk-..." />
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人物写真アップロード -->
+            <div class="form-section">
+                <h3>人物写真をアップロード</h3>
+                <div class="file-upload">
+                    <input type="file" id="photoUpload" accept="image/*" />
+                    <div class="file-upload-button">
+                        <span>📸 写真を選択してください</span>
+                    </div>
+                </div>
+                <img id="previewImage" class="preview-image" style="display: none;" />
+            </div>
+
+            <!-- コメント入力 -->
+            <div class="form-section">
+                <h3>マンガのテーマ・コメント</h3>
+                <textarea id="comment" class="input-field" placeholder="例：今日は雨だったけど、友達と会えて楽しい一日でした！カフェでおしゃべりして、新しい本も買いました。"></textarea>
+            </div>
+
+            <!-- 生成ボタン -->
+            <button id="generateBtn" class="generate-btn">🎨 4コママンガを生成する</button>
+
+            <!-- ローディング -->
+            <div id="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <p>マンガを生成中です...<br>少々お待ちください 🎨</p>
+            </div>
+
+            <!-- 結果表示 -->
+            <div id="result" class="result">
+                <h3>✨ 生成された4コママンガ</h3>
+                <div id="mangaPanels" class="manga-panels">
+                    <!-- マンガパネルがここに表示されます -->
+                </div>
+            </div>
+
+            <!-- エラー表示 -->
+            <div id="error" class="error" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        let uploadedImage = null;
+        let debugMode = false;
+
+        // DOM要素の取得
+        const elements = {
+            debugModeToggle: document.getElementById('debugMode'),
+            debugControls: document.getElementById('debugControls'),
+            apiKeyInput: document.getElementById('apiKey'),
+            photoUpload: document.getElementById('photoUpload'),
+            previewImage: document.getElementById('previewImage'),
+            commentInput: document.getElementById('comment'),
+            generateBtn: document.getElementById('generateBtn'),
+            loading: document.getElementById('loading'),
+            result: document.getElementById('result'),
+            mangaPanels: document.getElementById('mangaPanels'),
+            error: document.getElementById('error')
+        };
+
+        // デバッグモードの切り替え
+        elements.debugModeToggle.addEventListener('change', function() {
+            debugMode = this.checked;
+            elements.debugControls.style.display = debugMode ? 'block' : 'none';
+        });
+
+        // ファイルアップロード処理
+        elements.photoUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // ファイルサイズチェック（10MB以下）
+                if (file.size > 10 * 1024 * 1024) {
+                    showError('ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。');
+                    return;
+                }
+
+                // 画像ファイルかチェック
+                if (!file.type.startsWith('image/')) {
+                    showError('画像ファイルを選択してください。');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImage = e.target.result;
+                    elements.previewImage.src = uploadedImage;
+                    elements.previewImage.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // マンガ生成処理
+        elements.generateBtn.addEventListener('click', generateManga);
+
+        async function generateManga() {
+            // バリデーション
+            if (!uploadedImage) {
+                showError('人物写真をアップロードしてください。');
+                return;
+            }
+
+            if (!elements.commentInput.value.trim()) {
+                showError('マンガのテーマ・コメントを入力してください。');
+                return;
+            }
+
+            if (debugMode && !elements.apiKeyInput.value.trim()) {
+                showError('デバッグモードではAPIキーの入力が必要です。');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                hideError();
+
+                // APIキーの取得
+                const apiKey = debugMode ? elements.apiKeyInput.value.trim() : process.env.OPENAI_API_KEY;
+
+                if (!apiKey) {
+                    throw new Error('APIキーが設定されていません。');
+                }
+
+                // 人物の特徴を分析
+                const characterDescription = await analyzeCharacter(uploadedImage, apiKey);
+                
+                // 4コマストーリーを生成
+                const story = await generateStory(elements.commentInput.value.trim(), apiKey);
+                
+                // 4コマのマンガ画像を生成
+                const mangaImages = await generateMangaImages(characterDescription, story, apiKey);
+                
+                // 結果を表示
+                displayMangaResult(mangaImages, story);
+                
+            } catch (error) {
+                console.error('Error generating manga:', error);
+                showError('マンガの生成中にエラーが発生しました: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 人物の特徴を分析する関数
+        async function analyzeCharacter(imageData, apiKey) {
+            const base64Image = imageData.split(',')[1];
+            
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o",
+                    messages: [
+                        {
+                            role: "user",
+                            content: [
+                                {
+                                    type: "text",
+                                    text: "この人物の写真から、アニメ風キャラクターを作るための特徴を詳細に分析してください。髪型、髪色、服装、アクセサリー、体格、表情などの特徴を日本語で具体的に記述してください。"
+                                },
+                                {
+                                    type: "image_url",
+                                    image_url: {
+                                        url: imageData
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    max_tokens: 500
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`OpenAI API Error: ${errorData.error?.message || 'Unknown error'}`);
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        // 4コマストーリーを生成する関数
+        async function generateStory(comment, apiKey) {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o",
+                    messages: [
+                        {
+                            role: "system",
+                            content: "あなたは4コママンガのストーリー作家です。ユーザーのコメントを基に、面白くて心温まる4コママンガのストーリーを作成してください。各コマには簡潔なセリフと場面の説明を含めてください。"
+                        },
+                        {
+                            role: "user",
+                            content: `次のコメントを基に4コママンガのストーリーを作成してください：「${comment}」\n\n以下の形式で出力してください：\nコマ1: [場面の説明] - セリフ: \"[セリフ]\"\nコマ2: [場面の説明] - セリフ: \"[セリフ]\"\nコマ3: [場面の説明] - セリフ: \"[セリフ]\"\nコマ4: [場面の説明] - セリフ: \"[セリフ]\"`
+                        }
+                    ],
+                    max_tokens: 600
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`OpenAI API Error: ${errorData.error?.message || 'Unknown error'}`);
+            }
+
+            const data = await response.json();
+            return parseStory(data.choices[0].message.content);
+        }
+
+        // ストーリーをパースする関数
+        function parseStory(storyText) {
+            const panels = [];
+            const lines = storyText.split('\n').filter(line => line.trim());
+            
+            for (let line of lines) {
+                if (line.match(/コマ\d+:/)) {
+                    const parts = line.split(' - セリフ: ');
+                    if (parts.length >= 2) {
+                        const scene = parts[0].replace(/コマ\d+:\s*/, '');
+                        const dialogue = parts[1].replace(/"/g, '');
+                        panels.push({ scene, dialogue });
+                    }
+                }
+            }
+            
+            // 4コマに調整
+            while (panels.length < 4) {
+                panels.push({ scene: '続きのシーン', dialogue: '...' });
+            }
+            
+            return panels.slice(0, 4);
+        }
+
+        // マンガ画像を生成する関数
+        async function generateMangaImages(characterDescription, story, apiKey) {
+            const images = [];
+            
+            for (let i = 0; i < story.length; i++) {
+                const panel = story[i];
+                const prompt = `Anime-style 4-panel manga illustration, colorful, high quality, detailed. Character: ${characterDescription}. Scene: ${panel.scene}. Include speech bubble with text "${panel.dialogue}". Manga panel style with clear borders, expressive characters, vibrant colors.`;
+                
+                try {
+                    const response = await fetch('https://api.openai.com/v1/images/generations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: "dall-e-3",
+                            prompt: prompt,
+                            n: 1,
+                            size: "1024x1024",
+                            quality: "standard"
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`DALL-E API Error: ${errorData.error?.message || 'Unknown error'}`);
+                    }
+
+                    const data = await response.json();
+                    images.push({
+                        url: data.data[0].url,
+                        dialogue: panel.dialogue
+                    });
+                    
+                    // APIレート制限を考慮して少し待機
+                    if (i < story.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                } catch (error) {
+                    console.error(`Error generating image for panel ${i + 1}:`, error);
+                    images.push({
+                        url: null,
+                        dialogue: panel.dialogue,
+                        error: error.message
+                    });
+                }
+            }
+            
+            return images;
+        }
+
+        // マンガ結果を表示する関数
+        function displayMangaResult(images, story) {
+            elements.mangaPanels.innerHTML = '';
+            
+            images.forEach((image, index) => {
+                const panelDiv = document.createElement('div');
+                panelDiv.className = 'manga-panel';
+                
+                if (image.url) {
+                    panelDiv.innerHTML = `
+                        <img src="${image.url}" alt="マンガパネル ${index + 1}" />
+                        <div class="panel-number">${index + 1}</div>
+                    `;
+                } else {
+                    panelDiv.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; color: #666;">
+                            <div style="text-align: center;">
+                                <p>画像生成エラー</p>
+                                <small>${image.error || 'Unknown error'}</small>
+                            </div>
+                        </div>
+                        <div class="panel-number">${index + 1}</div>
+                    `;
+                }
+                
+                elements.mangaPanels.appendChild(panelDiv);
+            });
+            
+            elements.result.style.display = 'block';
+            elements.result.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ユーティリティ関数
+        function showLoading(show) {
+            elements.loading.style.display = show ? 'block' : 'none';
+            elements.generateBtn.disabled = show;
+        }
+
+        function showError(message) {
+            elements.error.textContent = message;
+            elements.error.style.display = 'block';
+        }
+
+        function hideError() {
+            elements.error.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
